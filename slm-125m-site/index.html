@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SLM-125M · a legal language model trained from scratch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #faf9f6; --panel: #ffffff; --ink: #1e293b; --muted: #64748b;
+    --faint: #94a3b8; --line: #e7e5e0; --teal: #0f766e; --violet: #7c3aed;
+    --rose: #e11d48; --blue: #3b82f6; --amber: #f59e0b;
+    --grad: linear-gradient(90deg, #0f766e, #7c3aed, #e11d48);
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Figtree', system-ui, sans-serif;
+    --shadow: 0 8px 30px rgba(15, 23, 42, 0.07);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans);
+    line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .grad-text { background: var(--grad); -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; }
+  .grad-bar { height: 4px; border-radius: 999px; background: var(--grad); }
+
+  header { text-align: center; padding: 1rem 0 0.5rem; }
+  .kicker { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--violet); font-weight: 700; }
+  h1 { font-size: 3rem; line-height: 1.05; font-weight: 800; margin: 0.5rem 0; }
+  .sub { max-width: 640px; margin: 0.4rem auto 0; color: var(--muted); font-size: 1.05rem; }
+
+  .stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; margin: 1.4rem 0 0; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 0.5rem 0.9rem; text-align: center; box-shadow: var(--shadow); }
+  .stat .v { font-family: var(--mono); font-weight: 700; font-size: 1.05rem; }
+  .stat .k { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
+    padding: 1.5rem; box-shadow: var(--shadow); margin-top: 1.6rem; }
+
+  .mini { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em;
+    font-weight: 700; color: var(--faint); margin-bottom: 0.4rem; }
+  textarea { width: 100%; font-family: var(--mono); font-size: 0.95rem; line-height: 1.6;
+    border: 1px solid var(--line); border-radius: 12px; padding: 0.9rem 1rem; background: #fdfdfc;
+    color: var(--ink); resize: vertical; min-height: 92px; }
+  textarea:focus { outline: none; border-color: var(--violet); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.7rem 0 0; }
+  .chip { font-family: var(--mono); font-size: 0.76rem; border: 1px solid var(--line);
+    background: #fff; border-radius: 999px; padding: 0.3rem 0.7rem; cursor: pointer; color: var(--muted); }
+  .chip:hover { border-color: var(--teal); color: var(--teal); }
+
+  .controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1.1rem; }
+  .ctl label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); }
+  .ctl .val { font-family: var(--mono); color: var(--ink); font-weight: 600; }
+  .ctl input[type=range] { width: 100%; accent-color: var(--violet); }
+
+  .row { display: flex; align-items: center; gap: 1rem; margin-top: 1.2rem; }
+  button.go { font-family: var(--sans); font-weight: 700; font-size: 1rem; color: #fff;
+    background: var(--grad); border: none; border-radius: 12px; padding: 0.8rem 1.6rem;
+    cursor: pointer; box-shadow: var(--shadow); }
+  button.go:disabled { opacity: 0.55; cursor: not-allowed; }
+  .status { font-family: var(--mono); font-size: 0.82rem; color: var(--muted); }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--teal);
+    margin-right: 6px; vertical-align: middle; }
+  .dot.warm { background: var(--amber); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+  .out { margin-top: 1.4rem; font-size: 1.05rem; line-height: 1.75; min-height: 40px; }
+  .out .prompt { font-weight: 600; color: var(--ink); }
+  .out .completion { color: var(--teal); }
+  .out.empty { color: var(--faint); font-style: italic; }
+
+  .about { margin-top: 1.6rem; }
+  .about h3 { font-size: 1.15rem; margin: 0 0 0.5rem; }
+  .about p { color: var(--muted); font-size: 0.96rem; margin: 0.4rem 0; }
+  .badge { display: inline-block; font-family: var(--mono); font-size: 0.72rem; font-weight: 700;
+    padding: 0.15rem 0.5rem; border-radius: 6px; background: #f0f9ff; color: var(--blue);
+    border: 1px solid #cfe7fb; }
+  .pipe { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.8rem; }
+  .pstep { font-family: var(--mono); font-size: 0.74rem; border: 1px solid var(--line);
+    border-radius: 8px; padding: 0.35rem 0.6rem; color: var(--muted); background: #fff; }
+  .pstep b { color: var(--ink); }
+
+  footer { text-align: center; margin-top: 2.5rem; color: var(--faint); font-size: 0.85rem; }
+  footer .mono { font-family: var(--mono); }
+  a { color: var(--violet); text-decoration: none; }
+  @media (max-width: 640px) { h1 { font-size: 2.2rem; } .controls { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Vizuara AI Labs · trained from scratch</div>
+    <h1>SLM&#8209;<span class="grad-text">125M</span></h1>
+    <p class="sub">A 125-million-parameter Llama-style language model, pretrained from
+      random weights on a legal and financial corpus. Give it the start of a sentence
+      and it continues in the legal register.</p>
+    <div class="stats">
+      <div class="stat"><div class="v">125.8M</div><div class="k">parameters</div></div>
+      <div class="stat"><div class="v">16,384</div><div class="k">vocab</div></div>
+      <div class="stat"><div class="v">1,024</div><div class="k">context</div></div>
+      <div class="stat"><div class="v">2.19B</div><div class="k">train tokens</div></div>
+      <div class="stat"><div class="v grad-text">8.50</div><div class="k">val perplexity</div></div>
+      <div class="stat"><div class="v">~$57</div><div class="k">total to build</div></div>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="mini">your prompt (a prefix to continue)</div>
+    <textarea id="prompt">The plaintiff alleges that the defendant</textarea>
+    <div class="chips" id="chips"></div>
+
+    <div class="controls">
+      <div class="ctl">
+        <label>temperature <span class="val" id="tv">0.80</span></label>
+        <input type="range" id="temp" min="0.1" max="1.4" step="0.05" value="0.8" />
+      </div>
+      <div class="ctl">
+        <label>max tokens <span class="val" id="mv">90</span></label>
+        <input type="range" id="maxt" min="20" max="200" step="10" value="90" />
+      </div>
+      <div class="ctl">
+        <label>top-p <span class="val" id="pv">0.95</span></label>
+        <input type="range" id="topp" min="0.5" max="1" step="0.01" value="0.95" />
+      </div>
+      <div class="ctl">
+        <label>top-k <span class="val" id="kv">50</span></label>
+        <input type="range" id="topk" min="0" max="100" step="5" value="50" />
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="go" id="go">Generate</button>
+      <div class="status" id="status"><span class="dot"></span>ready</div>
+    </div>
+
+    <div class="out empty" id="out">The completion will appear here.</div>
+  </div>
+
+  <div class="card about">
+    <h3>What this is <span class="badge">base completer</span></h3>
+    <p>This is a <b>base model</b>, not a chatbot. It was trained on next-token
+      prediction only, so it <b>continues</b> text rather than answering questions.
+      Prompt it with the opening of a sentence and watch it complete the thought.</p>
+    <p>The honest quality metric is <b>held-out validation perplexity: 8.50</b> (lower is
+      better). It <b>speaks the legal register fluently</b> (case-citation phrasing,
+      procedural language) but it does <b>not know facts</b>, at 125M parameters a model
+      holds only about 31MB of usable knowledge. Grounded facts would need retrieval (RAG).</p>
+    <div class="pipe">
+      <span class="pstep"><b>stream</b> 3 datasets</span>
+      <span class="pstep"><b>clean</b> rule chain</span>
+      <span class="pstep"><b>dedup</b> + decontaminate</span>
+      <span class="pstep"><b>16K</b> byte-level BPE</span>
+      <span class="pstep"><b>pack</b> 1024-token windows</span>
+      <span class="pstep"><b>pretrain</b> 8&#215;H100, 5 epochs</span>
+    </div>
+    <p style="margin-top:0.9rem">Corpus: US case law (~40%), SEC filings (~40%),
+      educational web text (~20%). First call may take ~15&#8211;30s while the model
+      wakes from idle.</p>
+  </div>
+
+  <footer>
+    <div class="grad-bar" style="width:150px;margin:0 auto 12px"></div>
+    <p>Trained from scratch on Modal. Completions run live on a CPU endpoint.</p>
+    <p class="mono">slm-engineering.vizuara.ai</p>
+  </footer>
+</div>
+
+<script>
+  const API = "https://thesreedath--slm-125m-inference-web.modal.run";
+  const $ = (id) => document.getElementById(id);
+  const examples = [
+    "The plaintiff alleges that the defendant",
+    "Pursuant to the terms of this Agreement,",
+    "The Company's net revenues for the fiscal year",
+    "In determining whether the search was reasonable, the court",
+    "The Board of Directors hereby resolves that",
+  ];
+  const chips = $("chips");
+  examples.forEach((ex) => {
+    const c = document.createElement("span");
+    c.className = "chip"; c.textContent = ex;
+    c.onclick = () => { $("prompt").value = ex; };
+    chips.appendChild(c);
+  });
+
+  const bind = (id, out, fmt) => {
+    const el = $(id); const o = $(out);
+    const upd = () => (o.textContent = fmt(el.value));
+    el.addEventListener("input", upd); upd();
+  };
+  bind("temp", "tv", (v) => (+v).toFixed(2));
+  bind("maxt", "mv", (v) => v);
+  bind("topp", "pv", (v) => (+v).toFixed(2));
+  bind("topk", "kv", (v) => v);
+
+  function setStatus(text, warm) {
+    $("status").innerHTML = '<span class="dot' + (warm ? " warm" : "") + '"></span>' + text;
+  }
+
+  async function generate() {
+    const prompt = $("prompt").value.trim();
+    if (!prompt) return;
+    $("go").disabled = true;
+    const out = $("out");
+    out.className = "out empty"; out.textContent = "";
+    setStatus("waking the model and generating…", true);
+    const body = {
+      prompt,
+      max_new_tokens: +$("maxt").value,
+      min_new_tokens: 40,
+      temperature: +$("temp").value,
+      top_p: +$("topp").value,
+      top_k: +$("topk").value,
+      repetition_penalty: 1.3,
+    };
+    const t0 = performance.now();
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const r = await fetch(API + "/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await r.json();
+        if (data.error) throw new Error(data.error);
+        const secs = ((performance.now() - t0) / 1000).toFixed(1);
+        out.className = "out";
+        out.innerHTML =
+          '<span class="prompt">' + escapeHtml(prompt) + "</span>" +
+          '<span class="completion">' + escapeHtml(data.generated) + "</span>";
+        setStatus("done in " + secs + "s", false);
+        $("go").disabled = false;
+        return;
+      } catch (e) {
+        if (attempt === 2) {
+          setStatus("error, please try again", false);
+          out.className = "out empty"; out.textContent = "The endpoint did not respond. It may be waking up; try once more.";
+          $("go").disabled = false;
+          return;
+        }
+        setStatus("still waking the model… (retry " + (attempt + 1) + ")", true);
+        await new Promise((res) => setTimeout(res, 3000));
+      }
+    }
+  }
+  function escapeHtml(s) {
+    return s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  }
+  $("go").onclick = generate;
+</script>
+</body>
+</html>
