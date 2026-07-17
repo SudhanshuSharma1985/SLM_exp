@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>SLM-125M · a legal language model trained from scratch</title>
+<title>SLM-125M · an instruction-tuned legal language model built from scratch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -29,7 +29,7 @@
   .kicker { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.16em;
     text-transform: uppercase; color: var(--violet); font-weight: 700; }
   h1 { font-size: 3rem; line-height: 1.05; font-weight: 800; margin: 0.5rem 0; }
-  .sub { max-width: 640px; margin: 0.4rem auto 0; color: var(--muted); font-size: 1.05rem; }
+  .sub { max-width: 660px; margin: 0.4rem auto 0; color: var(--muted); font-size: 1.05rem; }
 
   .stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; margin: 1.4rem 0 0; }
   .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
@@ -39,23 +39,25 @@
 
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
     padding: 1.5rem; box-shadow: var(--shadow); margin-top: 1.6rem; }
+  .card h2 { font-size: 1.4rem; margin: 0 0 0.2rem; }
+  .card h2 .n { font-family: var(--mono); font-size: 0.9rem; color: var(--violet); font-weight: 700;
+    margin-right: 0.5rem; }
+  .lead { color: var(--muted); font-size: 0.98rem; margin: 0.3rem 0 1.1rem; }
 
   .mini { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em;
     font-weight: 700; color: var(--faint); margin-bottom: 0.4rem; }
-  textarea { width: 100%; font-family: var(--mono); font-size: 0.95rem; line-height: 1.6;
+  textarea, input.q { width: 100%; font-family: var(--mono); font-size: 0.92rem; line-height: 1.6;
     border: 1px solid var(--line); border-radius: 12px; padding: 0.9rem 1rem; background: #fdfdfc;
-    color: var(--ink); resize: vertical; min-height: 92px; }
-  textarea:focus { outline: none; border-color: var(--violet); }
+    color: var(--ink); resize: vertical; }
+  textarea { min-height: 150px; }
+  textarea:focus, input.q:focus { outline: none; border-color: var(--violet); }
 
   .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.7rem 0 0; }
   .chip { font-family: var(--mono); font-size: 0.76rem; border: 1px solid var(--line);
     background: #fff; border-radius: 999px; padding: 0.3rem 0.7rem; cursor: pointer; color: var(--muted); }
   .chip:hover { border-color: var(--teal); color: var(--teal); }
-
-  .controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1.1rem; }
-  .ctl label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); }
-  .ctl .val { font-family: var(--mono); color: var(--ink); font-weight: 600; }
-  .ctl input[type=range] { width: 100%; accent-color: var(--violet); }
+  .chip.neg { border-color: #fbd0d9; color: var(--rose); }
+  .chip.neg:hover { border-color: var(--rose); }
 
   .row { display: flex; align-items: center; gap: 1rem; margin-top: 1.2rem; }
   button.go { font-family: var(--sans); font-weight: 700; font-size: 1rem; color: #fff;
@@ -68,159 +70,380 @@
   .dot.warm { background: var(--amber); animation: pulse 1s infinite; }
   @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
 
-  .out { margin-top: 1.4rem; font-size: 1.05rem; line-height: 1.75; min-height: 40px; }
-  .out .prompt { font-weight: 600; color: var(--ink); }
-  .out .completion { color: var(--teal); }
-  .out.empty { color: var(--faint); font-style: italic; }
+  .answer { margin-top: 1.3rem; padding: 1rem 1.1rem; border-radius: 12px;
+    border: 1px solid #b7e4dc; background: #f0fdfa; font-size: 1.02rem; line-height: 1.7; }
+  .answer.empty { border-color: var(--line); background: #fdfdfc; color: var(--faint);
+    font-style: italic; }
+  .answer .lab { font-family: var(--mono); font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--teal); font-weight: 700; display: block; margin-bottom: 0.3rem; }
 
-  .about { margin-top: 1.6rem; }
+  .warn { margin-top: 1rem; padding: 0.8rem 1rem; border-radius: 10px; font-size: 0.88rem;
+    border: 1px solid #fbd0d9; background: #fff1f4; color: #9f1239; }
+
   .about h3 { font-size: 1.15rem; margin: 0 0 0.5rem; }
   .about p { color: var(--muted); font-size: 0.96rem; margin: 0.4rem 0; }
   .badge { display: inline-block; font-family: var(--mono); font-size: 0.72rem; font-weight: 700;
     padding: 0.15rem 0.5rem; border-radius: 6px; background: #f0f9ff; color: var(--blue);
     border: 1px solid #cfe7fb; }
+
+  table.t { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  table.t th, table.t td { text-align: left; padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--line); }
+  table.t th { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); font-weight: 700; }
+  table.t td.num, table.t th.num { text-align: right; font-family: var(--mono); }
+  .tbl-scroll { overflow-x: auto; }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 0.45rem; vertical-align: middle; }
+
+  .dist { display: flex; height: 40px; border-radius: 10px; overflow: hidden; margin: 0.3rem 0 0.9rem;
+    box-shadow: inset 0 0 0 1px var(--line); }
+  .dist span { display: flex; align-items: center; justify-content: center; color: #fff;
+    font-family: var(--mono); font-size: 0.8rem; font-weight: 700; }
+  .legend { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.84rem; color: var(--muted); }
+  .legend b { color: var(--ink); }
+
+  .arch { display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 0.4rem; }
+  .anode { width: 100%; max-width: 460px; text-align: center; border: 1px solid var(--line);
+    border-radius: 10px; padding: 0.6rem 0.8rem; background: #fdfdfc; font-size: 0.92rem; }
+  .anode .t { font-weight: 700; }
+  .anode .d { font-family: var(--mono); font-size: 0.74rem; color: var(--faint); }
+  .anode.io { background: #f0f9ff; border-color: #cfe7fb; }
+  .anode.emb { background: #f0fdfa; border-color: #b7e4dc; }
+  .arrow { width: 2px; height: 16px; background: var(--faint); }
+  .ablock { width: 100%; max-width: 500px; border: 2px dashed var(--violet); border-radius: 14px;
+    padding: 0.9rem; position: relative; margin: 4px 0; background: rgba(124,58,237,0.03); }
+  .ablock .rep { position: absolute; top: -11px; right: 12px; background: var(--violet); color: #fff;
+    font-family: var(--mono); font-size: 0.72rem; font-weight: 700; padding: 0.1rem 0.5rem; border-radius: 6px; }
+  .ablock .anode { max-width: 380px; }
+  .res { font-family: var(--mono); font-size: 0.72rem; color: var(--teal); }
+
+  .derive { font-family: var(--mono); font-size: 0.86rem; }
+  .derive .drow { display: flex; justify-content: space-between; gap: 1rem; padding: 0.4rem 0;
+    border-bottom: 1px dashed var(--line); }
+  .derive .drow.total { border-bottom: none; border-top: 2px solid var(--ink); font-weight: 700; margin-top: 0.3rem; }
+  .derive .lbl { color: var(--muted); }
+  .derive .amt { color: var(--ink); white-space: nowrap; }
+
+  ol.steps { margin: 0; padding-left: 0; list-style: none; counter-reset: s; }
+  ol.steps li { position: relative; padding: 0.2rem 0 0.9rem 2.4rem; counter-increment: s; }
+  ol.steps li::before { content: counter(s); position: absolute; left: 0; top: 0;
+    width: 1.7rem; height: 1.7rem; border-radius: 50%; background: var(--grad); color: #fff;
+    font-family: var(--mono); font-weight: 700; font-size: 0.8rem; display: flex;
+    align-items: center; justify-content: center; }
+  ol.steps li b { display: block; }
+  ol.steps li span { color: var(--muted); font-size: 0.92rem; }
+
+  ul.vars { margin: 0; padding: 0; list-style: none; }
+  ul.vars li { padding: 0.55rem 0 0.55rem 1.4rem; position: relative; border-bottom: 1px solid var(--line);
+    font-size: 0.94rem; color: var(--muted); }
+  ul.vars li:last-child { border-bottom: none; }
+  ul.vars li::before { content: "\2192"; position: absolute; left: 0; color: var(--violet); font-weight: 700; }
+  ul.vars li b { color: var(--ink); }
+
   .pipe { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.8rem; }
   .pstep { font-family: var(--mono); font-size: 0.74rem; border: 1px solid var(--line);
     border-radius: 8px; padding: 0.35rem 0.6rem; color: var(--muted); background: #fff; }
   .pstep b { color: var(--ink); }
 
+  .funnel { font-family: var(--mono); font-size: 0.85rem; }
+  .funnel .frow { display: flex; align-items: center; gap: 0.7rem; padding: 0.3rem 0; }
+  .funnel .bar { height: 20px; border-radius: 5px; background: var(--grad); flex-shrink: 0; }
+  .funnel .lbl { color: var(--muted); white-space: nowrap; min-width: 132px; }
+  .funnel .amt { color: var(--ink); font-weight: 700; }
+
   footer { text-align: center; margin-top: 2.5rem; color: var(--faint); font-size: 0.85rem; }
-  footer .mono { font-family: var(--mono); }
   a { color: var(--violet); text-decoration: none; }
-  @media (max-width: 640px) { h1 { font-size: 2.2rem; } .controls { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 640px) { h1 { font-size: 2.2rem; } }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="kicker">Vizuara AI Labs · trained from scratch</div>
+    <div class="kicker">SLM · trained from scratch on a law dataset</div>
     <h1>SLM&#8209;<span class="grad-text">125M</span></h1>
-    <p class="sub">A 125-million-parameter Llama-style language model, pretrained from
-      random weights on a legal and financial corpus. Give it the start of a sentence
-      and it continues in the legal register.</p>
+    <p class="sub">A 125-million-parameter Llama-style model, pretrained from random
+      weights on a legal and financial corpus &mdash; then <b>instruction-tuned</b> on a
+      synthetic, LLM-judged Q&amp;A dataset. Give it a passage and ask it a question.</p>
     <div class="stats">
       <div class="stat"><div class="v">125.8M</div><div class="k">parameters</div></div>
       <div class="stat"><div class="v">16,384</div><div class="k">vocab</div></div>
       <div class="stat"><div class="v">1,024</div><div class="k">context</div></div>
-      <div class="stat"><div class="v">2.19B</div><div class="k">train tokens</div></div>
-      <div class="stat"><div class="v grad-text">8.50</div><div class="k">val perplexity</div></div>
-      <div class="stat"><div class="v">~$57</div><div class="k">total to build</div></div>
+      <div class="stat"><div class="v">7,279</div><div class="k">Q&amp;A pairs</div></div>
+      <div class="stat"><div class="v grad-text">5.10</div><div class="k">val perplexity</div></div>
+      <div class="stat"><div class="v">~$15</div><div class="k">total to build</div></div>
     </div>
   </header>
 
+  <!-- ============ THE DEMO ============ -->
   <div class="card">
-    <div class="mini">your prompt (a prefix to continue)</div>
-    <textarea id="prompt">The plaintiff alleges that the defendant</textarea>
+    <div class="mini">context (the model answers only from this)</div>
+    <textarea id="ctx">The plaintiff, Marcia DeWitt, filed suit against Northstar Freight Corp. on March 14, 1994, alleging negligent maintenance of a loading dock ramp. The district court granted summary judgment for the defendant, holding that DeWitt failed to establish that Northstar had actual or constructive notice of the defect. On appeal, DeWitt argues the court applied the wrong standard, contending that res ipsa loquitur shifts the burden to the defendant. The record shows Northstar inspected the ramp quarterly, with the last inspection on January 6, 1994, revealing no defects. We affirm.</textarea>
+
+    <div class="mini" style="margin-top:1.1rem">your question</div>
+    <input class="q" id="q" value="On what date did the plaintiff file suit?" />
     <div class="chips" id="chips"></div>
 
-    <div class="controls">
-      <div class="ctl">
-        <label>temperature <span class="val" id="tv">0.80</span></label>
-        <input type="range" id="temp" min="0.1" max="1.4" step="0.05" value="0.8" />
-      </div>
-      <div class="ctl">
-        <label>max tokens <span class="val" id="mv">90</span></label>
-        <input type="range" id="maxt" min="20" max="200" step="10" value="90" />
-      </div>
-      <div class="ctl">
-        <label>top-p <span class="val" id="pv">0.95</span></label>
-        <input type="range" id="topp" min="0.5" max="1" step="0.01" value="0.95" />
-      </div>
-      <div class="ctl">
-        <label>top-k <span class="val" id="kv">50</span></label>
-        <input type="range" id="topk" min="0" max="100" step="5" value="50" />
-      </div>
-    </div>
-
     <div class="row">
-      <button class="go" id="go">Generate</button>
+      <button class="go" id="go">Ask</button>
       <div class="status" id="status"><span class="dot"></span>ready</div>
     </div>
 
-    <div class="out empty" id="out">The completion will appear here.</div>
+    <div class="answer empty" id="out"><span class="lab">answer</span>The model's answer will appear here.</div>
+
+    <div class="warn">
+      <b>Honest warning:</b> refusal is <b>unreliable</b>. The red chip asks something the
+      passage never states &mdash; the model <i>should</i> say &ldquo;That is not stated in the
+      context&rdquo;, but it will often <b>confidently invent</b> an answer instead. Judging
+      &ldquo;is this even answerable?&rdquo; is hard at 125M parameters. Don't trust it
+      unverified.
+    </div>
   </div>
 
+  <!-- ============ FINE-TUNING ============ -->
+  <div class="card">
+    <h2><span class="n">01</span>How it was instruction-tuned</h2>
+    <p class="lead">The base model is a <b>completer</b> &mdash; it continues text but cannot
+      answer a question. To make it follow instructions, we built a Q&amp;A dataset
+      <b>from the very same corpus</b> it was pretrained on, using <b>GPT-4.1-mini</b> as a
+      teacher, then filtered it hard.</p>
+
+    <div class="mini">the quality funnel (7,485 raw &rarr; 7,279 kept)</div>
+    <div class="funnel">
+      <div class="frow"><span class="lbl">generated</span><span class="bar" style="width:62%"></span><span class="amt">7,485</span></div>
+      <div class="frow"><span class="lbl">LLM-as-judge &ge;4/5</span><span class="bar" style="width:61%"></span><span class="amt">7,346</span></div>
+      <div class="frow"><span class="lbl">grounding check</span><span class="bar" style="width:60.5%"></span><span class="amt">7,294</span></div>
+      <div class="frow"><span class="lbl">fits 1,024 ctx</span><span class="bar" style="width:60.4%"></span><span class="amt">7,285</span></div>
+      <div class="frow"><span class="lbl">near-dup removal</span><span class="bar" style="width:60.4%"></span><span class="amt">7,281</span></div>
+      <div class="frow"><span class="lbl">decontaminated</span><span class="bar" style="width:60.3%"></span><span class="amt">7,279</span></div>
+    </div>
+
+    <ol class="steps" style="margin-top:1.2rem">
+      <li><b>Chunk the corpus</b><span>Split cleaned documents into 2,500 passages of ~500 tokens (measured with the base model's own tokenizer, so every example provably fits the 1,024-token window alongside its question and answer).</span></li>
+      <li><b>Synthesize with a teacher</b><span>GPT-4.1-mini writes 3 pairs per passage across four task types, at varied temperature for diversity. Every answer must be grounded in its passage; nothing may be invented.</span></li>
+      <li><b>LLM-as-judge</b><span>A second, stricter pass scores each pair 1&ndash;5 for correctness and grounding. Anything below 4 is discarded (139 dropped).</span></li>
+      <li><b>Filter hard</b><span>Token-overlap grounding check &rarr; near-duplicate removal &rarr; <b>decontamination</b>: any pair sharing a 13-word span with the CaseHOLD/LexGLUE benchmarks is deleted, so evaluation stays honest.</span></li>
+      <li><b>Train</b><span>3 epochs on a single H100, lr 2e-5 cosine, AdamW, bf16. Crucially, <b>loss is computed on the assistant's answer only</b> &mdash; the context and question are masked out, so the model learns to <i>answer</i>, not to parrot prompts.</span></li>
+    </ol>
+
+    <div class="tbl-scroll" style="margin-top:1.2rem">
+      <table class="t">
+        <thead><tr><th>Task type</th><th>What it teaches</th><th class="num">Pairs</th></tr></thead>
+        <tbody>
+          <tr><td>Grounded Q&amp;A</td><td>Answer from context (incl. <b>1,243 refusals</b>)</td><td class="num">3,692</td></tr>
+          <tr><td>Summarization</td><td>Compress without inventing</td><td class="num">1,457</td></tr>
+          <tr><td>Extraction</td><td>Prose &rarr; structured JSON</td><td class="num">1,043</td></tr>
+          <tr><td>Rewriting</td><td>Plain English / formal / bullets</td><td class="num">1,087</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tbl-scroll" style="margin-top:1.2rem">
+      <table class="t">
+        <thead><tr><th>Metric</th><th class="num">Base model</th><th class="num">After tuning</th></tr></thead>
+        <tbody>
+          <tr><td>Held-out loss</td><td class="num">2.66</td><td class="num"><b>1.63</b></td></tr>
+          <tr><td>Held-out perplexity</td><td class="num">14.30</td><td class="num"><b>5.10</b></td></tr>
+          <tr><td>Follows instructions?</td><td class="num">No</td><td class="num"><b>Yes</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ THE DATA ============ -->
+  <div class="card">
+    <h2><span class="n">02</span>The pretraining data</h2>
+    <p class="lead">Three public datasets streamed from HuggingFace and filtered to a
+      <b>2.04-billion-token</b> corpus. The two legal sources are small &mdash; together they
+      cap at ~2B tokens &mdash; so the strategy is <b>legal-first</b>: take essentially all of
+      the legal data, add a thin web slice for fluency. This is <b>not</b> a 70/20/10 split.</p>
+
+    <div class="mini">realized token distribution</div>
+    <div class="dist">
+      <span style="width:35.1%;background:var(--teal)">35%</span>
+      <span style="width:42.2%;background:var(--violet)">42%</span>
+      <span style="width:22.8%;background:var(--rose)">23%</span>
+    </div>
+    <div class="legend">
+      <div><span class="sw" style="background:var(--teal)"></span><b>Case law</b> &middot; ~715M tok</div>
+      <div><span class="sw" style="background:var(--violet)"></span><b>SEC filings</b> &middot; ~860M tok</div>
+      <div><span class="sw" style="background:var(--rose)"></span><b>Web (edu)</b> &middot; ~464M tok</div>
+    </div>
+
+    <div class="tbl-scroll" style="margin-top:1.2rem">
+      <table class="t">
+        <thead>
+          <tr><th>Source</th><th>What it is</th><th class="num">Cap</th><th class="num">Realized</th><th class="num">Share</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="sw" style="background:var(--teal)"></span>HFforLegal/case-law</td><td>US court opinions</td><td class="num">1.0B</td><td class="num">~715M</td><td class="num">35%</td></tr>
+          <tr><td><span class="sw" style="background:var(--violet)"></span>PleIAs/SEC</td><td>SEC filings (10-K etc.)</td><td class="num">1.3B</td><td class="num">~860M</td><td class="num">42%</td></tr>
+          <tr><td><span class="sw" style="background:var(--rose)"></span>HuggingFaceFW/fineweb-edu</td><td>Educational web text</td><td class="num">0.5B</td><td class="num">~464M</td><td class="num">23%</td></tr>
+          <tr><td colspan="3"><b>Total</b></td><td class="num"><b>2.04B</b></td><td class="num"><b>100%</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lead" style="margin-top:0.9rem;margin-bottom:0">Cleaned with a deterministic
+      6-step rule chain, near-deduplicated (MinHash+LSH), and decontaminated against
+      CaseHOLD/LexGLUE (~24k documents removed). Legal content is ~77% of the corpus.</p>
+  </div>
+
+  <!-- ============ TOKENIZER ============ -->
+  <div class="card">
+    <h2><span class="n">03</span>The BPE tokenizer</h2>
+    <p class="lead">Models read <b>tokens</b>, not characters. This one uses a <b>byte-level
+      Byte-Pair Encoding</b> tokenizer with a 16,384-token vocabulary, trained from scratch on
+      the legal corpus so its merges reflect legal language.</p>
+    <ul class="vars">
+      <li><b>Start from raw bytes.</b> The base alphabet is the 256 possible bytes, so <b>any</b> UTF-8 text is representable and there is effectively no &ldquo;unknown token.&rdquo;</li>
+      <li><b>Merge greedily.</b> Training repeatedly merges the most frequent adjacent pair, growing the vocab from 256 to 16,384. Frequent legal phrases collapse into single tokens.</li>
+      <li><b>Why only 16K?</b> The embedding table is 16,384 &times; 768 &asymp; <b>12.6M params &mdash; already ~10% of the model</b>. A bigger vocab would spend the tiny parameter budget on embeddings instead of transformer layers. It still averages ~3.9 characters per token here.</li>
+      <li><b>Reserved tokens.</b> <span class="res">&lt;|bos|&gt; &lt;|eos|&gt; &lt;|pad|&gt; &lt;|unk|&gt;</span> plus <span class="res">&lt;|system|&gt; &lt;|user|&gt; &lt;|assistant|&gt;</span> &mdash; the chat markers the fine-tune later builds its template on.</li>
+    </ul>
+  </div>
+
+  <!-- ============ ARCHITECTURE ============ -->
+  <div class="card">
+    <h2><span class="n">04</span>The architecture</h2>
+    <p class="lead">A decoder-only Transformer in the <b>Llama</b> style: pre-norm
+      <b>RMSNorm</b>, rotary embeddings (<b>RoPE</b>), <b>SwiGLU</b> feed-forward blocks, and
+      input/output embeddings <b>tied</b>. Twelve blocks stacked.</p>
+
+    <div class="arch">
+      <div class="anode io"><div class="t">Input token IDs</div><div class="d">sequence length 1,024</div></div>
+      <div class="arrow"></div>
+      <div class="anode emb"><div class="t">Token embedding</div><div class="d">16,384 &times; 768 (tied with output)</div></div>
+      <div class="arrow"></div>
+      <div class="ablock">
+        <span class="rep">&times; 12 layers</span>
+        <div class="arch">
+          <div class="anode"><div class="t">RMSNorm</div></div>
+          <div class="arrow"></div>
+          <div class="anode"><div class="t">Multi-Head Self-Attention + RoPE</div><div class="d">12 heads &times; 64 dim &middot; causal &middot; no bias</div></div>
+          <div class="res">&#8627; + residual</div>
+          <div class="arrow"></div>
+          <div class="anode"><div class="t">RMSNorm</div></div>
+          <div class="arrow"></div>
+          <div class="anode"><div class="t">SwiGLU MLP</div><div class="d">768 &#8594; 3,072 &#8594; 768</div></div>
+          <div class="res">&#8627; + residual</div>
+        </div>
+      </div>
+      <div class="arrow"></div>
+      <div class="anode"><div class="t">Final RMSNorm</div></div>
+      <div class="arrow"></div>
+      <div class="anode emb"><div class="t">LM head (tied embedding)</div><div class="d">768 &#8594; 16,384 logits</div></div>
+      <div class="arrow"></div>
+      <div class="anode io"><div class="t">Next-token probabilities</div></div>
+    </div>
+  </div>
+
+  <!-- ============ PARAMETER COUNT ============ -->
+  <div class="card">
+    <h2><span class="n">05</span>Where the 125.8M parameters come from</h2>
+    <p class="lead">Fully determined by the shapes above. With <span class="res">d = 768</span>,
+      vocab <span class="res">V = 16,384</span>, MLP inner <span class="res">i = 3,072</span>,
+      no attention bias, and tied embeddings:</p>
+
+    <div class="derive">
+      <div class="drow"><span class="lbl">Token embedding &nbsp;<b>V &times; d</b> = 16,384 &times; 768 &nbsp;(tied &rarr; counted once)</span><span class="amt">12,582,912</span></div>
+      <div class="drow"><span class="lbl">Attention Q,K,V,O &nbsp;<b>4 &times; d&sup2;</b></span><span class="amt">2,359,296</span></div>
+      <div class="drow"><span class="lbl">SwiGLU MLP gate,up,down &nbsp;<b>3 &times; d &times; i</b></span><span class="amt">7,077,888</span></div>
+      <div class="drow"><span class="lbl">2 &times; RMSNorm &nbsp;<b>2 &times; d</b></span><span class="amt">1,536</span></div>
+      <div class="drow"><span class="lbl"><b>Per layer</b></span><span class="amt">9,438,720</span></div>
+      <div class="drow"><span class="lbl"><b>12 layers</b> = 12 &times; 9,438,720</span><span class="amt">113,264,640</span></div>
+      <div class="drow total"><span class="lbl">Total = 12,582,912 + 113,264,640</span><span class="amt">125,847,552</span></div>
+    </div>
+    <p class="lead" style="margin-top:0.9rem;margin-bottom:0">&asymp; <b>125.8M</b> (a final
+      RMSNorm adds a negligible 768). Because the input embedding is <b>tied</b> to the output
+      head, that 12.6M table is counted once and the LM head costs nothing &mdash; tying alone
+      saves ~10% of the model.</p>
+  </div>
+
+  <!-- ============ VARIATIONS ============ -->
+  <div class="card">
+    <h2><span class="n">06</span>Variations that could have been tried</h2>
+    <ul class="vars">
+      <li><b>More refusal data.</b> The clearest weakness. Refusals were 17% of the fine-tuning set; pushing that to ~30% (plus harder negatives) is the most direct fix for the hallucination shown above.</li>
+      <li><b>More pretraining epochs.</b> Perplexity was still falling when pretraining stopped at 1 epoch. 3&ndash;5 epochs would give the fine-tune a stronger base to start from.</li>
+      <li><b>Grouped-Query Attention.</b> Fewer KV heads than query heads shrinks the KV cache and speeds inference, at a small quality cost.</li>
+      <li><b>Bigger model.</b> 350M&ndash;1B would hold far more knowledge <i>and</i> handle the "is this answerable?" judgment far better. Scale is the main lever for both.</li>
+      <li><b>Larger vocab or longer context.</b> 32K vocab shortens sequences; a 2,048-token window fits longer legal passages.</li>
+      <li><b>RAG.</b> The model knows no facts of its own. Retrieval would ground it in real documents &mdash; the single biggest upgrade beyond fine-tuning.</li>
+    </ul>
+  </div>
+
+  <!-- ============ ABOUT ============ -->
   <div class="card about">
-    <h3>What this is <span class="badge">base completer</span></h3>
-    <p>This is a <b>base model</b>, not a chatbot. It was trained on next-token
-      prediction only, so it <b>continues</b> text rather than answering questions.
-      Prompt it with the opening of a sentence and watch it complete the thought.</p>
-    <p>The honest quality metric is <b>held-out validation perplexity: 8.50</b> (lower is
-      better). It <b>speaks the legal register fluently</b> (case-citation phrasing,
-      procedural language) but it does <b>not know facts</b>, at 125M parameters a model
-      holds only about 31MB of usable knowledge. Grounded facts would need retrieval (RAG).</p>
+    <h3>What this is <span class="badge">instruction-tuned</span></h3>
+    <p>Built end-to-end from nothing: streamed and cleaned a legal corpus, trained a
+      tokenizer, pretrained a 125M model from random weights on 8&times;H100, then
+      synthesized and filtered a Q&amp;A set and fine-tuned it to follow instructions.
+      Total compute cost: <b>~$15</b>.</p>
+    <p>It has <b>no knowledge of its own</b> &mdash; at 125M parameters a model holds only a
+      few tens of MB of facts. It works <i>over the context you give it</i>, and it will
+      sometimes get that wrong. Not legal or financial advice.</p>
     <div class="pipe">
       <span class="pstep"><b>stream</b> 3 datasets</span>
       <span class="pstep"><b>clean</b> rule chain</span>
       <span class="pstep"><b>dedup</b> + decontaminate</span>
       <span class="pstep"><b>16K</b> byte-level BPE</span>
-      <span class="pstep"><b>pack</b> 1024-token windows</span>
-      <span class="pstep"><b>pretrain</b> 8&#215;H100, 5 epochs</span>
+      <span class="pstep"><b>pretrain</b> 8&#215;H100</span>
+      <span class="pstep"><b>synthesize</b> 7,279 Q&amp;A</span>
+      <span class="pstep"><b>judge</b> + filter</span>
+      <span class="pstep"><b>fine-tune</b> 1&#215;H100</span>
     </div>
-    <p style="margin-top:0.9rem">Corpus: US case law (~40%), SEC filings (~40%),
-      educational web text (~20%). First call may take ~15&#8211;30s while the model
-      wakes from idle.</p>
+    <p style="margin-top:0.9rem">First request may take ~15&#8211;30s while the model wakes
+      from idle.</p>
   </div>
 
   <footer>
     <div class="grad-bar" style="width:150px;margin:0 auto 12px"></div>
-    <p>Trained from scratch on Modal. Completions run live on a CPU endpoint.</p>
-    <p class="mono">slm-engineering.vizuara.ai</p>
+    <p>Built on Modal &middot;
+      <a href="https://huggingface.co/Sudhanshu1985/slm-125m-sft">fine-tuned model</a> &middot;
+      <a href="https://huggingface.co/Sudhanshu1985/slm-125m-base">base model</a></p>
   </footer>
 </div>
 
 <script>
-  const API = "https://thesreedath--slm-125m-inference-web.modal.run";
+  const API = "https://sudhanshu-sharma1985--slm-125m-sft-sftinference-web.modal.run";
   const $ = (id) => document.getElementById(id);
+
   const examples = [
-    "The plaintiff alleges that the defendant",
-    "Pursuant to the terms of this Agreement,",
-    "The Company's net revenues for the fiscal year",
-    "In determining whether the search was reasonable, the court",
-    "The Board of Directors hereby resolves that",
+    { q: "On what date did the plaintiff file suit?", neg: false },
+    { q: "Why did the court grant summary judgment?", neg: false },
+    { q: "Summarize this passage.", neg: false },
+    { q: "Extract the key named entities as JSON.", neg: false },
+    { q: "What injuries did the plaintiff suffer?", neg: true },
   ];
   const chips = $("chips");
   examples.forEach((ex) => {
     const c = document.createElement("span");
-    c.className = "chip"; c.textContent = ex;
-    c.onclick = () => { $("prompt").value = ex; };
+    c.className = "chip" + (ex.neg ? " neg" : "");
+    c.textContent = ex.q + (ex.neg ? "  (not in context)" : "");
+    c.onclick = () => { $("q").value = ex.q; };
     chips.appendChild(c);
   });
-
-  const bind = (id, out, fmt) => {
-    const el = $(id); const o = $(out);
-    const upd = () => (o.textContent = fmt(el.value));
-    el.addEventListener("input", upd); upd();
-  };
-  bind("temp", "tv", (v) => (+v).toFixed(2));
-  bind("maxt", "mv", (v) => v);
-  bind("topp", "pv", (v) => (+v).toFixed(2));
-  bind("topk", "kv", (v) => v);
 
   function setStatus(text, warm) {
     $("status").innerHTML = '<span class="dot' + (warm ? " warm" : "") + '"></span>' + text;
   }
 
-  async function generate() {
-    const prompt = $("prompt").value.trim();
-    if (!prompt) return;
+  function escapeHtml(s) {
+    return s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  }
+
+  async function ask() {
+    const context = $("ctx").value.trim();
+    const question = $("q").value.trim();
+    if (!question) return;
     $("go").disabled = true;
     const out = $("out");
-    out.className = "out empty"; out.textContent = "";
-    setStatus("waking the model and generating…", true);
-    const body = {
-      prompt,
-      max_new_tokens: +$("maxt").value,
-      min_new_tokens: 40,
-      temperature: +$("temp").value,
-      top_p: +$("topp").value,
-      top_k: +$("topk").value,
-      repetition_penalty: 1.3,
-    };
+    out.className = "answer empty";
+    out.innerHTML = '<span class="lab">answer</span>thinking…';
+    setStatus("waking the model and answering…", true);
+
+    const body = { context, question, max_new_tokens: 120 };
     const t0 = performance.now();
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const r = await fetch(API + "/generate", {
+        const r = await fetch(API + "/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
@@ -228,17 +451,17 @@
         const data = await r.json();
         if (data.error) throw new Error(data.error);
         const secs = ((performance.now() - t0) / 1000).toFixed(1);
-        out.className = "out";
-        out.innerHTML =
-          '<span class="prompt">' + escapeHtml(prompt) + "</span>" +
-          '<span class="completion">' + escapeHtml(data.generated) + "</span>";
-        setStatus("done in " + secs + "s", false);
+        out.className = "answer";
+        out.innerHTML = '<span class="lab">answer</span>' +
+          escapeHtml(data.answer || "(empty)");
+        setStatus("answered in " + secs + "s", false);
         $("go").disabled = false;
         return;
       } catch (e) {
         if (attempt === 2) {
           setStatus("error, please try again", false);
-          out.className = "out empty"; out.textContent = "The endpoint did not respond. It may be waking up; try once more.";
+          out.className = "answer empty";
+          out.innerHTML = '<span class="lab">answer</span>The endpoint did not respond. It may be waking up; try once more.';
           $("go").disabled = false;
           return;
         }
@@ -247,10 +470,8 @@
       }
     }
   }
-  function escapeHtml(s) {
-    return s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-  }
-  $("go").onclick = generate;
+  $("go").onclick = ask;
+  $("q").addEventListener("keydown", (e) => { if (e.key === "Enter") ask(); });
 </script>
 </body>
 </html>

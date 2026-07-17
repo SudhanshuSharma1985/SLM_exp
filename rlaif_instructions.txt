@@ -1,0 +1,24 @@
+Okay, we have a fine-tuned model of gamma 2 billion and a 125 million fine-tuned model, which was fine-tuned on the QA dataset, so these are the SFT frozen models. 
+
+Now I want to implement reinforcement learning with AI feedback on both of these models so that I can have a slightly better version of these models. 
+
+You can find the model parameters from either my Hugging Face or from my Modal account. 
+
+Now, I want to, in a step-by-step way, implement reinforcement learning with AI feedback, but I also want to implement it during a live lecture. That means I can't wait for more than 15 minutes for the entire data set curation followed by fine-tuning with PPO. 
+
+I also want to implement DPO Direct Preference Optimization. 
+
+The first step for this is to create the dataset such that we have a prompt followed by a preferred response and not a preferred response. 
+
+I want you to use a more powerful LLM, which could be Gemini 2.5 Flash, or you can use OpenAI mini models for creating this dataset. 
+
+I do not want to create a huge dataset because this whole implementation should be relatively fast, so I want the dataset to be maybe a total of 500 prompt-answer triplets. 
+
+And for the frozen SFT, you can pick the supervised fine-tuned model, which was fine-tuned on the QA dataset, the 125 million model. You will also find the fine-tuned model on gamma in the working directory. 
+
+Now, first, I want you to make a plan regarding how much expense this is going to be and what the approximate time is that we will be taking for this.
+
+I had provided you with multiple Gemini API keys for this, so you can make use of multiple API keys to make a large number of API calls in parallel so that the data set curation part is fast. However, the data set should be clean, it should be deduplicated, and there should be an LLM judge run to make sure that the preferred response is actually a better response compared to the rejected response. 
+
+
+And for the reward model, perhaps we can use the SLM fine-tuned model, but maybe we'll have to modify the last reward head. We also have to discuss whether we should do this for the gamma model or not. First, create a plan for this implementation, and after that, go ahead. 

@@ -1,0 +1,33 @@
+https://huggingface.co/thesreedath/slm-125m-base
+
+This is one of the models, which has 125 million parameters, that I have trained recently for 10 epochs.
+
+Now I want to perform fine-tuning on top of this model. 
+
+One thing I want to note is that I have the dataset, which is cleaned and available on modal. However, the tokenizer that was used for this particular model on HuggingFace might be different. 
+
+Which means when I create the fine-tuning dataset, you will have to run Tokenizer based on the tokenizer.json in this particular Hugging Phase link. 
+
+Now, what this means is we will have to create the new tokenizer vocabulary based on the tokenizer.json available, and we will also have to create a new Q&A dataset for fine-tuning. 
+
+Now this Q&A dataset should be of high quality and high diversity, and we should also ensure that in this dataset there are no duplicates. 
+
+https://slm-finetuning-data.vercel.app/
+
+In the above website link, I have mentioned some details regarding what we have to do with respect to the Q&A data. We have to ensure quality by making sure that, as an LLM using an LLM as a judge, the answers corresponding to the question should be correct. The diversity of the Q&A data set should be very high. Also, we have to take a decision regarding how big the training data set should be. 
+
+Now, to create the QnA dataset from the training data, you can make use of Gemini 2.5 flash. 
+
+And this process should be done as much as possible in parallel. 
+
+And before you implement your Q&A dataset creation using Gemini, just let me know what is the estimated cost. Also, you should let me know how many Q&A pairs are appropriate in this particular case. 
+
+Now let's implement this in two stages:
+1. In phase one, we will work on building the fine-tuning dataset and tokenizing the fine-tuned data.
+2. In phase two, we will implement the actual fine-tuning.
+When we are implementing the actual fine-tuning also, you should discuss with me regarding:
+- the number of GPUs to use
+- which GPU to use
+- how much time this fine-tuning is expected to complete
+- the total number of tokens that will be consumed during fine-tuning
+

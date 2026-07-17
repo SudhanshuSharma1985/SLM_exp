@@ -873,6 +873,18 @@ def pretrain(epochs: int = 0, max_usd: float = 0.0, resume: bool = False):
     pretrain_full.remote(e, cap, resume)
 
 
+@app.local_entrypoint()
+def pretrain_bg(epochs: int = 0, max_usd: float = 0.0, resume: bool = False):
+    """Detached launch via .spawn() so a local client/network drop can't cancel
+    the GPU job. Run with `modal run --detach modal_app.py::pretrain_bg`."""
+    e = epochs or config.PRETRAIN_EPOCHS
+    cap = max_usd or config.BUDGET_CAP_USD
+    handle = pretrain_full.spawn(e, cap, resume)
+    print(f"SPAWNED full pretrain: {e} epochs, cap ${cap}, "
+          f"{config.PRETRAIN_GPU_COUNT}x{config.PRETRAIN_GPU}")
+    print(f"SPAWN_CALL_ID={handle.object_id}")
+
+
 @app.function(image=gpu_image, volumes=VOLUMES, gpu="H100:1", timeout=60 * 15)
 def generate_samples() -> list:
     """Complete a few legal/financial prefixes with the trained base model."""

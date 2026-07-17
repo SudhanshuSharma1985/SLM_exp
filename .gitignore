@@ -7,3 +7,6 @@ node_modules/
 data/
 *.bin
 *.safetensors
+
+venv/
+*.egg-info/
